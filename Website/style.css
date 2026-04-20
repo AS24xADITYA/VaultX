@@ -1,0 +1,193 @@
+:root {
+    /* Brand Colors */
+    --primary: #00ffcc;
+    --bg-color: #0a0e17;
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --text-main: #f0f4f8;
+    --text-muted: #8b9bb4;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    /* Subtle radial grid vibe */
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 255, 204, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(20, 100, 255, 0.15) 0px, transparent 50%);
+    color: var(--text-main);
+    text-align: center;
+    min-height: 100vh;
+    
+    /* Scroll fix: Allow vertical scrolling, hide horizontal spillage */
+    overflow-x: hidden;
+    overflow-y: auto;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 0; /* Breathing room for scrolling */
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Abstract Background Shapes for depth */
+.bg-shape {
+    position: absolute;
+    filter: blur(80px);
+    z-index: -1;
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: float 10s infinite ease-in-out alternate;
+}
+
+.shape1 {
+    width: 300px;
+    height: 300px;
+    background: #00ffcc;
+    top: -100px;
+    left: -100px;
+}
+
+.shape2 {
+    width: 400px;
+    height: 400px;
+    background: #3a3a6a;
+    bottom: -150px;
+    right: -100px;
+    animation-delay: -5s;
+}
+
+@keyframes float {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(30px) scale(1.1); }
+}
+
+.container {
+    z-index: 1;
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    font-size: 3.5rem;
+    margin-bottom: 5px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.title-icon {
+    display: inline-block;
+    transition: transform 0.3s;
+}
+
+h1:hover .title-icon {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+.tagline {
+    font-size: 1.1rem;
+    margin-bottom: 40px;
+    color: var(--text-muted);
+    font-family: 'Fira Code', monospace;
+}
+
+/* Glassmorphism Card */
+.card.glass {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 30px;
+    border-radius: 16px;
+    width: 320px;
+    margin: 0 auto 40px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card.glass:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(0, 255, 204, 0.1);
+    border-color: rgba(0, 255, 204, 0.3);
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    color: var(--text-main);
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+li {
+    margin: 15px 0;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #d1d9e6;
+    transition: color 0.2s;
+}
+
+li:hover {
+    color: var(--primary);
+}
+
+.icon {
+    font-size: 1.2rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modern Glowing Button */
+.download-btn.glow-effect {
+    display: inline-block;
+    padding: 16px 32px;
+    background: transparent;
+    color: var(--primary);
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: 2px solid var(--primary);
+    position: relative;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.15), inset 0 0 10px rgba(0, 255, 204, 0.05);
+}
+
+.download-btn.glow-effect:hover {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.6), inset 0 0 15px rgba(0, 255, 204, 0.4);
+    transform: scale(1.05);
+}
+
+.footer {
+    margin-top: 50px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-family: 'Fira Code', monospace;
+    letter-spacing: 0.5px;
+}
