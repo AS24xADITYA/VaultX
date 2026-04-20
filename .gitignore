@@ -1,0 +1,9 @@
+.env
+vault.db
+master.json
+kdf_salt.bin
+venv/
+__pycache__/
+*.pyc
+dist/
+build/
