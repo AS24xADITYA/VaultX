@@ -1,0 +1,19 @@
+{
+ "manifest_version": 3,
+ "name": "VaultX Auto-Fill",
+ "version": "1.0",
+ "description": "Auto-fill passwords from your VaultX vault.",
+ "permissions": ["activeTab", "scripting"],
+ "host_permissions": ["http://127.0.0.1:5000/*"],
+ "action": {
+ "default_popup": "popup.html",
+ "default_icon": "icon.png"
+ },
+ "icons": {
+   "128": "icon.png"
+ },
+ "content_scripts": [{
+ "matches": ["<all_urls>"],
+ "js": ["content.js"]
+ }]
+}

@@ -16,14 +16,18 @@ Encryption: AES-256-GCM (Advanced Encryption Standard, Galois/Counter Mode)
 
 import os
 import base64
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from argon2.low_level import hash_secret_raw, Type
 
 SALT_FILE        = 'kdf_salt.bin'
-PBKDF2_ITERS     = 200_000
 KEY_BYTES        = 32          # 32 bytes = 256 bits
+
+# OWASP recommended parameters for Argon2id (2024):
+ARGON2_TIME_COST   = 3          # Number of iterations
+ARGON2_MEM_COST    = 65536      # 64 MB of RAM per attempt
+ARGON2_PARALLELISM = 4          # 4 parallel threads
 
 
 def _get_or_create_salt() -> bytes:
@@ -39,20 +43,21 @@ def _get_or_create_salt() -> bytes:
 
 def derive_key(password: str) -> bytes:
     """
-    Convert a human password to a 256-bit AES key using PBKDF2.
+    Convert a human password to a 256-bit AES key using Argon2id.
     
-    Even a short/weak password becomes a strong 256-bit key after
-    200,000 rounds of SHA-256 hashing with a random salt.
+    Argon2id is memory-hard and time-hard, making GPU-based brute-force
+    attacks significantly more expensive than PBKDF2.
     """
     salt = _get_or_create_salt()
-    kdf  = PBKDF2HMAC(
-        algorithm  = hashes.SHA256(),
-        length     = KEY_BYTES,
-        salt       = salt,
-        iterations = PBKDF2_ITERS,
-        backend    = default_backend()
+    return hash_secret_raw(
+        secret      = password.encode('utf-8'),
+        salt        = salt,
+        time_cost   = ARGON2_TIME_COST,
+        memory_cost = ARGON2_MEM_COST,
+        parallelism = ARGON2_PARALLELISM,
+        hash_len    = KEY_BYTES,
+        type        = Type.ID
     )
-    return kdf.derive(password.encode('utf-8'))
 
 
 def encrypt(key: bytes, plaintext: str) -> dict:

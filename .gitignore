@@ -1,9 +1,21 @@
+# Private data and secrets
 .env
 vault.db
 master.json
 kdf_salt.bin
+totp_config.json
+
+# Python environment and cache
 venv/
 __pycache__/
 *.pyc
+
+# Build and distribution
 dist/
 build/
+*.spec
+*.exe
+
+# OS generated files
+.DS_Store
+Thumbs.db

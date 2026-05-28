@@ -55,7 +55,7 @@ def audit_vault(db_path: str, key: bytes) -> dict:
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
-            'SELECT id, site, username, password_ciphertext, password_nonce, updated_at '
+            'SELECT id, site, username, password_ciphertext, password_nonce, updated_at, expiry_days '
             'FROM passwords'
         ).fetchall()
 
@@ -94,12 +94,14 @@ def audit_vault(db_path: str, key: bytes) -> dict:
 
         # ── Age check ──────────────────────────────────────────────────
         days = _days_since(row['updated_at'])
-        if days >= MAX_AGE_DAYS:
+        expiry = row['expiry_days'] if row['expiry_days'] is not None else MAX_AGE_DAYS
+        if days >= expiry:
             old_entries.append({
                 'id'      : row['id'],
                 'site'    : row['site'],
                 'username': row['username'] or '',
                 'days_old': days,
+                'expiry'  : expiry
             })
 
         # Clear plaintext from memory

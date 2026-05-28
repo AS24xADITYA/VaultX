@@ -1,96 +1,48 @@
-# VaultX Desktop 🔐
+# 🔐 VaultX — Secure Desktop Password Manager
 
-**Native password manager — no browser, no server, no internet required.**
+VaultX is a premium, offline-first password manager built with **PyQt6** and **Argon2id** encryption. It provides a robust, visually stunning interface to manage your digital life with zero compromise on security.
 
-Built with PyQt6. Same AES-256-GCM + bcrypt + PBKDF2 cryptographic core as
-the web version. Packages into a single executable with PyInstaller.
+## ✨ Premium Features
 
----
+1.  **🛡️ Military-Grade Encryption:** Uses AES-256-GCM with Argon2id key derivation (OWASP 2024 recommended).
+2.  **📱 Two-Factor Authentication (TOTP):** Built-in support for Google Authenticator / Authy.
+3.  **🌓 Dynamic Themes:** Toggle between beautifully crafted **Dark Mode** and **Light Mode** interfaces.
+4.  **🕵️ Fuzzy Search:** Advanced search that handles typos using Levenshtein distance.
+5.  **⏳ Auto-Lock:** Automatically locks the vault after 5 minutes of inactivity.
+6.  **📋 Password History:** Keeps track of previous passwords so you never lose access.
+7.  **📊 Health Audit:** Analyzes your vault for weak, reused, or old passwords with a visual security score.
+8.  **🌐 Browser Extension:** Auto-fill support for Chrome via local secure API.
+9.  **📝 Secure Notes:** Modern card-based encrypted section for recovery codes and private text.
+10. **📁 CSV Import:** Bulk import from Chrome, Firefox, or other managers.
+11. **📅 Expiry Reminders:** Proactive rotation alerts for aging credentials.
 
-## Run from source
+## 🚀 Getting Started
 
+### Prerequisites
+- Python 3.10+
+- `pip install -r requirements.txt`
+
+### Running the App
 ```bash
-pip install -r requirements.txt
-python main.py
+python src/main.py
 ```
 
-Data is stored in `~/.vaultx/` (your home directory):
-- `vault.db`        — AES-256-GCM encrypted SQLite database
-- `kdf_salt.bin`    — PBKDF2 salt
-- `master.json`     — bcrypt hash of master password
-
----
-
-## Build standalone executable
-
-### Windows → VaultX.exe
+### Building the Windows App
 ```bash
-pip install pyinstaller
-pyinstaller vaultx.spec
-# Output: dist/VaultX.exe   (~35 MB, no install needed)
+pyinstaller --windowed --onefile --name VaultX_Secure --icon assets/logo.ico src/main.py
 ```
 
-### macOS → VaultX.app
-```bash
-pip install pyinstaller
-pyinstaller vaultx.spec
-# Output: dist/VaultX.app   (drag to Applications)
-```
+## 📂 Project Structure
+- `src/`: Core Python source code.
+- `extension/`: Chrome Browser Extension for Auto-fill.
+- `website/`: Product landing page.
+- `assets/`: Icons and static images.
 
-### Linux → VaultX binary
-```bash
-pip install pyinstaller
-pyinstaller vaultx.spec
-# Output: dist/VaultX
-```
+## 🔒 Security Architecture
+- **Zero-Knowledge:** Your master password and vault data never leave your computer.
+- **Argon2id:** Hardened against GPU brute-force attacks.
+- **AES-256-GCM:** Ensures both data privacy and integrity (tamper-evident).
+- **k-Anonymity:** Breach checks use the HIBP API without ever sending your actual password or full hash.
 
 ---
-
-## Features
-
-| Feature | Status |
-|---------|--------|
-| AES-256-GCM encryption | ✅ |
-| bcrypt master password (cost 12) | ✅ |
-| PBKDF2 key derivation (200K iter) | ✅ |
-| IP rate limiting (5 attempts → 5 min lockout) | ✅ |
-| Health audit (weak / reused / old) | ✅ |
-| Password generator (cryptographically secure) | ✅ |
-| Real-time strength meter | ✅ |
-| HaveIBeenPwned breach check (k-anonymity) | ✅ |
-| Clipboard auto-clear after 30s | ✅ |
-| Dark theme native UI | ✅ |
-| **No browser required** | ✅ |
-| **No Flask / web server** | ✅ |
-| **No internet connection needed** | ✅ |
-
----
-
-## Architecture
-
-```
-main.py  (PyQt6 GUI — replaces Flask + HTML templates)
-├── SetupWindow      — first-run master password
-├── LoginWindow      — bcrypt authentication
-└── VaultWindow      — main vault
-      ├── PasswordTable   — CRUD entries
-      ├── HealthPanel     — audit engine
-      ├── EntryDialog     — add/edit with strength meter
-      └── GeneratorDialog — password generator
-
-Backend (unchanged from web version):
-  crypto.py   — AES-256-GCM + PBKDF2
-  vault.py    — SQLite CRUD
-  auth.py     — bcrypt
-  utils.py    — generator + strength + HIBP
-  health.py   — audit engine
-```
-
-The UI is a clean adapter layer. The entire cryptographic backend is
-reused unchanged — proving that separation of concerns allows the same
-secure core to power both a web app and a native desktop app.
-
----
-
-## Author
-Aditya Sunil Shinde | VIT Pune | AIML-A | 2025-26
+Created by Aditya Sunil Shinde | VIT Pune
