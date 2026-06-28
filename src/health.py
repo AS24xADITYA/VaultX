@@ -148,3 +148,86 @@ def audit_vault(db_path: str, key: bytes) -> dict:
         'reused_count' : reused_count,
         'old_count'    : len(old_entries),
     }
+
+def generate_entropy_heatmap_data(db_path: str, vault_key: bytes) -> dict:
+    """
+    Decrypt all passwords and compute per-character frequency.
+    Returns a dict of {character: frequency_count} for heatmap rendering.
+    Also detects keyboard walk patterns.
+    """
+    all_chars = {}
+    keyboard_walks = []
+    WALK_PATTERNS = ['qwerty', 'asdfgh', 'zxcvbn', '123456', 'qazwsx', 'poiuyt']
+
+    with sqlite3.connect(db_path) as conn:
+        rows = conn.execute("SELECT password_ciphertext, password_nonce FROM passwords").fetchall()
+
+    for row in rows:
+        pw = decrypt(vault_key, row[1], row[0]).lower()
+        for ch in pw:
+            if ch.isprintable():
+                all_chars[ch] = all_chars.get(ch, 0) + 1
+        for pattern in WALK_PATTERNS:
+            if pattern in pw:
+                keyboard_walks.append(pattern)
+
+    return {
+        'char_freq'      : all_chars,
+        'keyboard_walks' : keyboard_walks,
+        'total_passwords': len(rows)
+    }
+
+def record_health_snapshot(vault_instance, score: int, total: int, weak: int, reused: int):
+    with sqlite3.connect(vault_instance.db_path) as conn:
+        conn.execute(
+            "INSERT INTO health_timeline (score, total, weak_count, reused_count) VALUES (?,?,?,?)",
+            (score, total, weak, reused)
+        )
+
+def get_health_timeline(vault_instance) -> list[dict]:
+    with sqlite3.connect(vault_instance.db_path) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            "SELECT score, total, weak_count, reused_count, recorded_at "
+            "FROM health_timeline ORDER BY recorded_at ASC LIMIT 90"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+# Matplotlib keyboard heatmap
+def render_heatmap_png(char_freq: dict) -> bytes:
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    import io
+
+    KEYBOARD_ROWS = [
+        list('1234567890'),
+        list('qwertyuiop'),
+        list('asdfghjkl'),
+        list('zxcvbnm')
+    ]
+
+    fig, ax = plt.subplots(figsize=(8, 3))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 4); ax.axis('off')
+    fig.patch.set_facecolor('#0D1422')
+    max_freq = max(char_freq.values()) if char_freq else 1
+    
+    for row_i, row in enumerate(KEYBOARD_ROWS):
+        for col_i, key in enumerate(row):
+            freq = char_freq.get(key, 0)
+            heat = freq / max_freq  # 0.0 → 1.0
+            color = plt.cm.RdYlGn_r(heat)  # green=low, red=high
+            rect = mpatches.FancyBboxPatch(
+                (col_i * 0.95 + row_i * 0.2, 3 - row_i * 0.85),
+                0.88, 0.75, boxstyle="round,pad=0.05",
+                ec='#2A3A5A', fc=color, lw=0.5
+            )
+            ax.add_patch(rect)
+            ax.text(col_i * 0.95 + row_i * 0.2 + 0.44,
+                    3 - row_i * 0.85 + 0.37,
+                    key.upper(), ha='center', va='center',
+                    fontsize=7, color='white', fontweight='bold')
+    
+    buf = io.BytesIO()
+    plt.savefig(buf, format='PNG', dpi=150, bbox_inches='tight', facecolor='#0D1422')
+    plt.close()
+    return buf.getvalue()
