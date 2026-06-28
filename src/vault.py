@@ -67,6 +67,18 @@ class Vault:
                 )
             ''')
 
+            # Feature 10: Health Timeline
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS health_timeline (
+                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    score        INTEGER NOT NULL,
+                    total        INTEGER NOT NULL,
+                    weak_count   INTEGER NOT NULL,
+                    reused_count INTEGER NOT NULL,
+                    recorded_at  TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
             # Handle migration for existing DBs missing expiry_days
             try:
                 conn.execute('ALTER TABLE passwords ADD COLUMN expiry_days INTEGER DEFAULT 90')
