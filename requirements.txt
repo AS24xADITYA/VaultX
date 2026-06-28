@@ -9,3 +9,4 @@ pillow>=10.2.0
 rapidfuzz>=3.6.0
 flask>=3.0.0
 flask-cors>=4.0.0
+matplotlib>=3.8.0
