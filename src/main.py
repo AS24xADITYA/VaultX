@@ -23,6 +23,7 @@ import sys
 import os
 import time
 import threading
+import cryptography.exceptions
 import base64
 from pathlib import Path
 from datetime import datetime
@@ -830,13 +831,16 @@ class VaultWindow(QMainWindow):
         tb_lay = QHBoxLayout(toolbar); tb_lay.setContentsMargins(20, 12, 20, 12); tb_lay.setSpacing(12)
         self.search = QLineEdit(); self.search.setObjectName("searchBar")
         self.search.setPlaceholderText("🔍  Search sites, usernames…")
+        self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter_search)
         self.search.setMinimumWidth(300)
         btn_import = QPushButton("📁 Import"); btn_import.setObjectName("btnSecondary")
         btn_import.clicked.connect(self._import_csv)
+        btn_export = QPushButton("📤 Export CSV"); btn_export.setObjectName("btnSecondary")
+        btn_export.clicked.connect(self._export_csv)
         btn_add = QPushButton("+ Add Password"); btn_add.setObjectName("btnPrimary")
         btn_add.clicked.connect(self._add_entry)
-        tb_lay.addWidget(self.search, 1); tb_lay.addWidget(btn_import); tb_lay.addWidget(btn_add)
+        tb_lay.addWidget(self.search, 1); tb_lay.addWidget(btn_import); tb_lay.addWidget(btn_export); tb_lay.addWidget(btn_add)
         right_lay.addWidget(toolbar)
 
         # Stacked: passwords / health
@@ -1121,6 +1125,24 @@ class VaultWindow(QMainWindow):
                 "Failed to decrypt this entry. This usually happens if the encryption algorithm was upgraded "
                 "or the vault files are incompatible. Please try creating a fresh vault.")
 
+    def _export_csv(self):
+        reply = QMessageBox.warning(self, "Export Unencrypted", 
+            "You are about to export all your passwords to a plaintext CSV file. Anyone with this file will have full access. Proceed?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+        if reply == QMessageBox.StandardButton.Yes:
+            path, _ = QFileDialog.getSaveFileName(self, "Export CSV", "vault_export.csv", "CSV Files (*.csv)")
+            if path:
+                try:
+                    import csv
+                    with open(path, 'w', newline='', encoding='utf-8') as f:
+                        writer = csv.writer(f)
+                        writer.writerow(["Site", "Username", "Password", "Category", "Notes"])
+                        for e in self.vault.list_all(include_passwords=True):
+                            writer.writerow([e['site'], e['username'], e['password'], e['category'], e.get('notes', '')])
+                    self._set_status("✅  Export successful. KEEP THIS FILE SAFE.")
+                except Exception as ex:
+                    QMessageBox.critical(self, "Export Error", f"Failed to export: {ex}")
+
     def _import_csv(self):
         path, _ = QFileDialog.getOpenFileName(self, "Import CSV", "", "CSV Files (*.csv)")
         if path:
@@ -1229,10 +1251,44 @@ class VaultWindow(QMainWindow):
 # ─────────────────────────────────────────────────────────────────────────────
 #  LOGIN WINDOW
 # ─────────────────────────────────────────────────────────────────────────────
+class AppWindow(QStackedWidget):
+    def __init__(self):
+        super().__init__()
+        self.setMinimumSize(900, 600)
+        self.setWindowTitle("VaultX")
+        self._setup_panic_shortcut()
+
+    def _setup_panic_shortcut(self):
+        from PyQt6.QtGui import QKeySequence, QShortcut
+        from PyQt6.QtWidgets import QApplication
+        shortcut = QShortcut(QKeySequence("Ctrl+Shift+L"), self)
+        shortcut.activated.connect(self.panic_lock)
+
+    def panic_lock(self):
+        # 1. Stop API server (not implemented here yet)
+        
+        # 2. Wipe AES key from memory
+        from src.memwipe import secure_del
+        if hasattr(self, 'aes_key') and self.aes_key:
+            secure_del(self.aes_key)
+            self.aes_key = None
+
+        # 3. Clear clipboard
+        from PyQt6.QtWidgets import QApplication
+        QApplication.clipboard().clear()
+
+        # 4. Nullify vault reference and close
+        self.vault = None
+        self.close()
+
+    def show_setup(self):
+        pass
+
 class LoginWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("VaultX — Unlock")
+        self.setFixedSize(400, 500)
         self.setModal(True)
         self.key = None
         self._attempts = 0
@@ -1291,10 +1347,14 @@ class LoginWindow(QDialog):
         pw = self.pw_input.text()
         if verify_master_password(pw):
             key = derive_key(pw)
-            if totp_enabled():
-                if not verify_totp(key, self.totp_input.text()):
-                    self._show_error("Invalid 2FA code.")
-                    return
+            try:
+                if totp_enabled():
+                    if not verify_totp(key, self.totp_input.text()):
+                        self._show_error("Invalid 2FA code.")
+                        return
+            except cryptography.exceptions.InvalidTag:
+                self._show_error("Fatal Error: Cryptographic state mismatch (InvalidTag). Try resetting the vault.")
+                return
             self.key = key
             pw = None
             self.accept()
