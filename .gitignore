@@ -1,14 +1,28 @@
 # Private data and secrets
 .env
+*.db
+*.json
+*.bin
 vault.db
 master.json
 kdf_salt.bin
 totp_config.json
+canary.json
+vault_export.csv
 
 # Python environment and cache
 venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+
+# IDEs and Tools
+.vscode/
+.idea/
+*.swp
+*.log
 
 # Build and distribution
 dist/
